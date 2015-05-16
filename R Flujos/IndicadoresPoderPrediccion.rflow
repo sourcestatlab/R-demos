@@ -1,0 +1,521 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE rflow [
+<!ENTITY lt "&#38;#60;">
+<!ENTITY gt "&#62;">
+<!ENTITY amp "&#38;#38;">
+<!ENTITY apos "&#39;">
+<!ENTITY quot "&#34;">
+]>
+<rflow>
+	<graph version="0.3" width="852" height="584" locationtype="a" offsetx="20" offsety="10">
+		<setting>
+			<entry key="OUTPUT_DIRECTORY"></entry>
+			<entry key="SAVE_CACHE">false</entry>
+			<entry key="FONT_SCREEN">monospace</entry>
+			<entry key="TEXT_ENCODING">windows-1252</entry>
+			<entry key="LOAD_CACHE">false</entry>
+			<entry key="IGNORE_ERROR">false</entry>
+			<entry key="SAVE_WORKSPACE"></entry>
+			<entry key="OUTPUT_REPORT">true</entry>
+			<entry key="OUTPUT_ITEMS">script</entry>
+			<entry key="RUN_TYPE">2</entry>
+			<entry key="USE_GRID">true</entry>
+			<entry key="REPORT_TYPES">pdf,html</entry>
+			<entry key="FOLDER">IndicadoresPoderPrediccion</entry>
+			<entry key="GRID_DISTANCE2">10</entry>
+			<entry key="IMAGE_SIZE">480,480</entry>
+			<entry key="FONT_OTHER">sans-serif</entry>
+		</setting>
+		<node id="0" x="240" y="430">
+			<command>#################################################################
+####       Seleccionamos variables con suficiente Info       ####
+#################################################################
+
+### Porcentaje mínimo de valores pérdidos porc.min 
+ msn &lt;- paste(&quot;Ingrese el porcentaje mínimo de observaciones pérdidas a considerar &quot;,&quot;\n&quot;,
+              &quot;Ejm: 0.50&quot;)
+ porc.min &lt;- ginput(message=msn,title = &quot;Porcentaje mínimo de valores perdidos&quot;,
+               icon = c(&quot;info&quot;))
+ porc.min &lt;- as.numeric(porc.min)
+ porc.min
+  
+### Función porcentaje mínimo de valores pérdidos 
+ PorcPerd &lt;- function (x){
+     porc &lt;- length(x[is.na(x)])/length(x)	
+	return(porc)
+	}
+
+porc.perd  &lt;- sapply(BDD, PorcPerd)
+BDD &lt;- BDD[,which(porc.perd &lt; porc.min)]
+
+</command>
+			<property title="InfoSuf" shape="PREDICTION"/>
+			<option type="com.ef_prime.rflow.node.base.FreeNodeModel"/>
+		</node>
+		<node id="1" x="480" y="330">
+			<command>write.table(file=&quot;Variables_Categorias_Constantes.csv&quot;,var.cat.ctes,dec=&quot;,&quot;,sep=&quot;\t&quot;)</command>
+			<property title="CatCtes" shape="INPUT"/>
+			<option type="com.ef_prime.rflow.node.base.FreeNodeModel"/>
+		</node>
+		<node id="2" x="650" y="380">
+			<command>write.table(file=&quot;Indicador_Asociacion_Var_Cat.csv&quot;,indicador_cat,dec=&quot;,&quot;,sep=&quot;\t&quot;)</command>
+			<property title="IndAsociación" shape="INPUT"/>
+			<option type="com.ef_prime.rflow.node.base.FreeNodeModel"/>
+		</node>
+		<node id="3" x="310" y="430">
+			<command>#################################################################
+####             BDDs numericas y categoricas                ####
+#################################################################
+
+tipo.var  &lt;- sapply(BDD,class)
+BDD.num &lt;- BDD[,which(tipo.var==&quot;numeric&quot;)]
+BDD.cat &lt;- BDD[,which(tipo.var!=&quot;numeric&quot;)]
+
+</command>
+			<property title="Numérica?" shape="PREDICTION"/>
+			<option type="com.ef_prime.rflow.node.base.FreeNodeModel"/>
+		</node>
+		<node id="4" x="480" y="520">
+			<command>write.table(file=&quot;Variables_Numericas_Constantes.csv&quot;,var.num.ctes,dec=&quot;,&quot;,sep=&quot;\t&quot;)</command>
+			<property title="VarCtes" shape="INPUT"/>
+			<option type="com.ef_prime.rflow.node.base.FreeNodeModel"/>
+		</node>
+		<node id="5" x="10" y="60">
+			<command></command>
+			<property/>
+			<option type="com.ef_prime.rflow.node.base.CommentNodeModel">
+				<entry key="state">opened</entry>
+				<entry key="comment">SOURCE STAT LAB - ECUADOR
+Modelos de Predicción Binaria
+Alex E. Pérez - Diego P. Huaraca</entry>
+			</option>
+		</node>
+		<node id="6" x="340" y="370">
+			<command></command>
+			<property/>
+			<option type="com.ef_prime.rflow.node.base.CommentNodeModel">
+				<entry key="state">opened</entry>
+				<entry key="comment">NO</entry>
+			</option>
+		</node>
+		<node id="7" x="650" y="470">
+			<command>write.table(file=&quot;Indicador_Divergencia_Var_Num.csv&quot;,indicador_num,dec=&quot;,&quot;,sep=&quot;\t&quot;)</command>
+			<property title="IndDivergencia" shape="INPUT"/>
+			<option type="com.ef_prime.rflow.node.base.FreeNodeModel"/>
+		</node>
+		<node id="8" x="290" y="10">
+			<command></command>
+			<property/>
+			<option type="com.ef_prime.rflow.node.base.CommentNodeModel">
+				<entry key="state">opened</entry>
+				<entry key="comment">SCRIPT KS</entry>
+			</option>
+		</node>
+		<node id="9" x="400" y="380">
+			<command>#### Variables categoricas constantes en mas de 90%
+
+### Función categorias constantes en mas de 90%
+
+CatCte &lt;- function (x){
+    porc.cat &lt;- table(x)/sum(table(x))
+  if(any(porc.cat &gt; 0.9)){
+     cat.cte &lt;- &quot;SI&quot;
+  }else{
+  	cat.cte &lt;- &quot;NO&quot;
+  }
+  return(cat.cte)
+}
+
+vars.ctes  &lt;- sapply(BDD.cat, CatCte)
+
+# variables con categorias constantes
+var.cat.ctes &lt;- colnames(BDD.cat[,which(vars.ctes == &quot;SI&quot;)])
+
+# Base var categoricas definitiva
+BDD.cat &lt;- BDD.cat[, which(vars.ctes == &quot;NO&quot;)]
+
+
+
+</command>
+			<property title="NoCatCtes" shape="MODELING"/>
+			<option type="com.ef_prime.rflow.node.base.FreeNodeModel"/>
+		</node>
+		<node id="10" x="110" y="430">
+			<command>#################################################################
+####             BDD de regresores y var dep                 ####
+#################################################################
+
+### Directorio de trabajo
+ msn &lt;- paste(&quot;Ingrese la dirección de la Base de Datos BDD&quot;,&quot;\n&quot;,
+              &quot;Ejm: C:/SourceStatLab/Rscore&quot;)
+ dir &lt;- ginput(message=msn,title = &quot;Dirección de la Base de Datos&quot;,
+               icon = c(&quot;info&quot;))
+ dir &lt;- as.character(dir)
+ setwd(dir)
+    
+### Nombre de base de datos
+
+ list.files()
+
+ msn &lt;- paste(&quot;Ingrese el nombre de Base de Datos en formato .sav&quot;,&quot;\n&quot;,&quot;Ejm: base.sav&quot;)
+ nombre_base &lt;- ginput(message=msn,title = &quot;Nombre de Base de Datos&quot;,icon = c(&quot;info&quot;))
+    
+ nombre_base&lt;- as.character(nombre_base)
+   
+ BDD_original &lt;-read.spss(file=nombre_base, use.value.labels=FALSE,  
+                          to.data.frame=TRUE)
+    
+ BDD &lt;- BDD_original
+ dim(BDD)</command>
+			<property title="BDD" shape="OUTPUT"/>
+			<option type="com.ef_prime.rflow.node.base.FreeNodeModel"/>
+		</node>
+		<node id="11" x="560" y="470">
+			<command>#################################################################
+####      Llamado funciones filtrado variables numericas     ####
+#################################################################
+
+### Se calculan los indicadores para var numericas
+indicador_num &lt;- matrix(0,ncol(BDD.num), 4)
+
+for(i in seq(1:ncol(BDD.num))){
+	indicador_num [i,1] &lt;- monotona(GB,BDD.num[,i])*1
+	indicador_num [i,2:4] &lt;- ind_var_num (GB,BDD.num[,i])
+ }
+ad.acot &lt;- indicador_num[,3]/max(indicador_num[,3])
+indicador_num &lt;- data.frame(colnames(BDD.num), 1:ncol(BDD.num), indicador_num[,1:2],
+                            ad.acot, indicador_num[,4])
+
+### Indicador de divergencia total
+ ind.div &lt;- 0.70*indicador_num[,4]+0.20*indicador_num[,5]+0.10*indicador_num[,6]
+ indicador_num &lt;- data.frame (indicador_num,ind.div)
+ colnames(indicador_num) &lt;- c(&quot;Variable&quot;,&quot;Col Variable&quot;,&quot;Monotona&quot;,
+                               &quot;KS&quot;,&quot;AD&quot;,&quot;abs(Corr)&quot;,&quot;Ind_Div&quot;)
+ indicador_num &lt;- indicador_num[order(indicador_num[,&quot;Ind_Div&quot;],decreasing=TRUE),]
+
+View(indicador_num)</command>
+			<property title="PoderPred" shape="MODELING"/>
+			<option type="com.ef_prime.rflow.node.base.FreeNodeModel"/>
+		</node>
+		<node id="12" x="480" y="380">
+			<command>#################################################################
+####      Funciones de filtrado varibales categoricas        ####
+#################################################################
+
+### Funcion diferencia de informacion por categoria (DIC=RMR)
+RMR &lt;- function(x,y,pesos=NULL){
+ if(!is.null(pesos)){
+    rmr &lt;- sqrt(sum((pesos/sum(pesos))*((x-y)^2)))
+    }else{
+      rmr &lt;- sqrt(sum(((x-y)^2))/length(x))
+    }
+ return(rmr)
+}
+
+### Funcion valor de informacion (VI)  x:malo=1 --- y:bueno=0
+VI &lt;- function(x,y){
+ aux &lt;- ifelse(x/sum(x)==0,1,x/sum(x))
+ wof &lt;- log((y/sum(y))/aux)
+ wof &lt;- ifelse(wof==-Inf,0,wof)
+ VI &lt;-   sum(((y/sum(y))-(x/sum(x)))*wof)
+return(VI)
+}
+
+### Funcion indicadores de asociacion variables categoricas
+ind_var_cat &lt;- function (GB,variable){
+ vars &lt;- data.frame(GB,variable)
+        
+# Coeficiente de contingencia de Pearson
+ chisq&lt;-chisq.test(GB,variable)   
+ chisq&lt;- as.numeric(chisq$statistic)
+ cont &lt;- round(sqrt(chisq/(chisq+length(variable))),4)
+     
+# Diferencia de informacion por categoria
+ tc &lt;- table(GB,variable)
+ tot &lt;- ifelse ((tc[1,] + tc[2,])==0,1,(tc[1,] + tc[2,]))
+ odds &lt;- tc[2,]/tot
+ p &lt;- as.vector (table(GB))
+ porc_m &lt;- rep(p[2]/sum(p),dim(tc)[2])
+      
+ rmr &lt;- round(RMR(odds,porc_m,pesos=tot),4)
+
+# Valor de informacion
+ vi &lt;- VI(tc[1,],tc[2,])
+            
+return(c(cont,rmr,vi))
+}
+</command>
+			<property title="Asociación" shape="STAR"/>
+			<option type="com.ef_prime.rflow.node.base.FreeNodeModel"/>
+		</node>
+		<node id="13" x="480" y="470">
+			<command>#################################################################
+####      Funciones de filtrado variables numericas          ####
+#################################################################
+
+### Funcion monotonia tasa malo respecto a tasa bueno
+monotona &lt;- function(GB,var){
+ bivar &lt;- data.frame(GB,var)
+# Variable mayor a 0
+ bivar &lt;- subset(bivar, bivar$var&gt;=0)
+      
+# ordenamos var y creamos puntos de corte (numero de fila)
+ data_ord &lt;- bivar[order(bivar[,2],decreasing=FALSE),]
+ h &lt;- floor(dim(data_ord)[1]/20)
+ frac &lt;- seq(h,20*h,h)
+    
+# Tasas de buenos y malos por rango de la variable
+ pmb &lt;- c(0,0)
+ for (i in seq(1:(length(frac)-1))){
+      m &lt;- sum(data_ord[1:frac[i],1])
+      pm &lt;- m/ sum(data_ord[,1])
+      
+      b &lt;- (frac[i]- m)
+      pb &lt;- b/(nrow(data_ord)-sum(data_ord[,1]))
+      pmb &lt;- rbind(pmb,c(pm,pb))	
+    }
+ pmb &lt;- rbind(pmb[-1,],rep(1,2))
+    
+# Condicion para monotonia: tasa malo &lt;= tasa bueno
+ cond1 &lt;- all(pmb[,1] &lt;= pmb[,2])
+# Condicion para monotonia: tasa malo &gt;= tasa bueno
+ cond2 &lt;- all(pmb[,1] &gt;= pmb[,2])
+# Condicion para monotonia: tasa malo &lt; tasa bueno o tasa malo &gt; tasa bueno	
+ if(cond1 | cond2){
+      monotona &lt;- TRUE
+    }else{
+      monotona &lt;- FALSE
+    }
+return(monotona)
+}
+
+###    Funcion estadistico Anderson Darling (ad.test_modif)
+ad.test_modif &lt;- function(x1,x2)
+{
+ na.remove &lt;- function(x) {
+    na.status &lt;- lapply(x, is.na)
+    k &lt;- length(x)
+    x.new &lt;- list()
+    na.total &lt;- 0
+    for (i in 1:k) {
+         x.new[[i]] &lt;- x[[i]][!na.status[[i]]]
+         na.total &lt;- na.total + sum(na.status[[i]])
+      }
+  list(x.new = x.new, na.total = na.total)
+  }
+
+ samples &lt;- list(x1,x2)
+
+ out &lt;- na.remove(samples)
+ na.t &lt;- out$na.total
+ k &lt;- length(samples)
+ ns &lt;- sapply(samples, length)
+ if (any(ns == 0)) stop(&quot;Una muestra no tiene observaciones.&quot;)
+ x &lt;- NULL
+ for (i in 1:k) x &lt;- c(x, samples[[i]])
+   n &lt;- length(x)
+   Z.star &lt;- sort(unique(x))
+
+ out0 &lt;- .Call(&quot;doAdkTestStat&quot;, as.integer(k), as.double(x), as.integer(ns), as.double(Z.star))
+ #ad &lt;- out0 [1]/min(ns)
+ ad &lt;- out0 [1]
+return (ad)
+}
+
+### Funcion indicadores de divergencia variables numericas
+ind_var_num &lt;-function (GB,variable){  
+
+ vars &lt;- data.frame(GB,variable)
+ vars_m &lt;- subset(vars,subset=vars[,1]==1)
+ vars_b &lt;- subset(vars,subset=vars[,1]==0)
+      
+# Estadistico KS
+ ks &lt;- dgof::ks.test(vars_m[,2],vars_b[,2],alternative=&quot;two.sided&quot;)
+ ks &lt;- round(as.numeric(ks$statistic),4)
+
+# Estadistico AD
+ ad &lt;- 0
+ if(ks &gt; 0){
+    ad &lt;- ad.test_modif(vars_b[,2],vars_m[,2])
+    ad &lt;- round(as.numeric(ad),4)
+ }
+         
+# Coef de correlación de pearson
+  corr &lt;- round(abs(cor(vars[,1],vars[,2],method=&quot;pearson&quot;,
+                         use = &quot;complete.obs&quot;)),4)
+return(c(ks,ad,corr))
+}
+</command>
+			<property title="Divergencia" shape="STAR"/>
+			<option type="com.ef_prime.rflow.node.base.FreeNodeModel"/>
+		</node>
+		<node id="14" x="560" y="380">
+			<command>#################################################################
+####     Llamado funciones filtrado variables categoricas    ####
+#################################################################
+
+### Se calculan los indicadores para var categoricas
+indicador_cat &lt;- matrix(0,ncol(BDD.cat), 3)
+
+for(i in seq(1:ncol(BDD.cat))){
+	indicador_cat [i, 1:3] &lt;- ind_var_cat (GB, BDD.cat[, i])
+ }
+indicador_cat &lt;- data.frame(colnames(BDD.cat),1:ncol(BDD.cat), indicador_cat)
+
+### Indicador de asociacion total
+ ind.aso &lt;- 0.60*indicador_cat[,3]+0.30*indicador_cat[,4]+0.10*indicador_cat[,5]
+ indicador_cat &lt;- data.frame (indicador_cat,ind.aso)
+ colnames(indicador_cat) &lt;- c(&quot;Variable&quot;,&quot;Col Variable&quot;,&quot;Cont Pearson&quot;,
+                               &quot;DIC&quot;,&quot;VI&quot;,&quot;Ind_Aso&quot;)
+ indicador_cat &lt;- indicador_cat[order(indicador_cat[,&quot;Ind_Aso&quot;],decreasing=TRUE),]
+
+View(indicador_cat)
+</command>
+			<property title="PoderPred" shape="MODELING"/>
+			<option type="com.ef_prime.rflow.node.base.FreeNodeModel"/>
+		</node>
+		<node id="15" x="10" y="130">
+			<command></command>
+			<property/>
+			<option type="com.ef_prime.rflow.node.base.CommentNodeModel">
+				<entry key="state">opened</entry>
+				<entry key="comment">El Script desarrollado conocido como Script KS, es utilizado para calcular automáticamente varias medidas
+de divergencia (KS, AD, Corr Pearson) para variables numéricas y asociación (Cont Pearson, VI, DIC) para
+variables categóricas.
+
+VENTAJAS DE SU UTILIZACIÓN:
+	1. Calcular automáticamente el poder predictivo de cada variable.
+	2. Identificar el tipo de variables que mejor explican la variable dependiente.
+	3. Conocer a priori una cota inferior para el KS del modelo final.
+	4. Filtrado de variables numéricas y categóricas constantes.
+</entry>
+			</option>
+		</node>
+		<node id="16" x="170" y="430">
+			<command>
+### Nombres de las variables en la Base de datos
+
+  nom &lt;- as.character(names(BDD))
+
+### Filtros en la base de datos
+# BANCARIZADOS=1
+ col &lt;- grep(&quot;BANCARIZADOS&quot;,nom)
+ BDD&lt;-subset(BDD,BDD[,col]==1)
+ nom &lt;- as.character(names(BDD))
+
+# ANT_3M=0        
+ col &lt;- grep(&quot;ANT_3M&quot;,nom)
+ BDD&lt;-subset(BDD,BDD[,col]==0)
+ nom &lt;- as.character(names(BDD)) 
+  
+### Nombre de variable dependiente
+  
+  msn &lt;- &quot;Ingrese nombre de variable dependiente. Ejm: GB_30&quot;
+  nom_gb &lt;- ginput(message=msn,title = &quot;Nombre Variable Dependiente&quot;,
+                                       icon = c(&quot;info&quot;))
+  nom_gb&lt;- as.character(nom_gb)
+                             
+  col&lt;- grep(nom_gb,nom)[1]
+  BDD&lt;-subset(BDD,BDD[,col]&lt;=1)
+  GB &lt;- BDD[,col]
+  BDD&lt;-BDD[,-col]
+  table(GB)
+  
+    nom &lt;- as.character(names(BDD))
+    dim(BDD)
+
+</command>
+			<property title="Población" shape="PREDICTION"/>
+			<option type="com.ef_prime.rflow.node.base.FreeNodeModel"/>
+		</node>
+		<node id="17" x="400" y="470">
+			<command>#### Variables numericas que no son constantes 
+
+### Función variables constantes en mas del 80%
+
+VarCte &lt;- function (x){
+    decil &lt;- quantile(x,seq(0.1,1,0.1),na.rm=TRUE)
+  if(all(decil[1:(length(decil)-2)]==decil[2:(length(decil)-1)])){
+     cte &lt;- &quot;SI&quot;
+  }else{
+  	cte &lt;- &quot;NO&quot;
+  }
+  return(cte)
+}
+
+vars.ctes  &lt;- sapply(BDD.num, VarCte)
+
+# variables numericas constantes
+var.num.ctes &lt;- colnames(BDD.num[,which(vars.ctes == &quot;SI&quot;)])
+
+# Base var numericas definitiva
+BDD.num &lt;- BDD.num[,which(vars.ctes == &quot;NO&quot;)]
+</command>
+			<property title="NoCtes" shape="MODELING"/>
+			<option type="com.ef_prime.rflow.node.base.FreeNodeModel"/>
+		</node>
+		<node id="18" x="340" y="460">
+			<command></command>
+			<property/>
+			<option type="com.ef_prime.rflow.node.base.CommentNodeModel">
+				<entry key="state">opened</entry>
+				<entry key="comment">SI</entry>
+			</option>
+		</node>
+		<node id="19" x="40" y="430">
+			<command>#################################################################
+####              Modelo de predicción binaria               ####
+####    Equifax                                              ####
+####    Alex Pérez - Diego Huaraca                           ####
+#################################################################
+
+####   Eliminando historial .Rdata
+rm(list=ls())
+
+####   Librerias utilizadas
+#paq %in% .packages(all.available = TRUE)
+#paq &lt;- list(&quot;foreign&quot;, &quot;ggplot2&quot;, &quot;party&quot;, &quot;dgof&quot;, &quot;kSamples&quot;, &quot;gWidgets&quot;, &quot;gWidgetstcltk&quot;)
+#sapply(X=paq, FUN=library)
+
+library(foreign)
+library(ggplot2)
+library(party)
+library(dgof)
+library(kSamples)
+library(gWidgets)
+library(gWidgetstcltk)
+options(guiToolkit=&quot;tcltk&quot;)
+
+
+</command>
+			<property title="Indicadores" shape="MODELING"/>
+			<option type="com.ef_prime.rflow.node.base.FreeNodeModel"/>
+		</node>
+		<edge from="12" to="14"/>
+		<edge from="3" to="9"/>
+		<edge from="9" to="1"/>
+		<edge from="10" to="16"/>
+		<edge from="11" to="7"/>
+		<edge from="17" to="13"/>
+		<edge from="0" to="3"/>
+		<edge from="19" to="10"/>
+		<edge from="17" to="4"/>
+		<edge from="9" to="12"/>
+		<edge from="3" to="17"/>
+		<edge from="13" to="11"/>
+		<edge from="14" to="2"/>
+		<edge from="16" to="0"/>
+	</graph>
+	<task>
+		<taskgroup>
+			<taskproperty>
+				<entry key="title">Task</entry>
+			</taskproperty>
+			<taskentry node="16">
+				<taskproperty>
+					<entry key="title">Población</entry>
+				</taskproperty>
+			</taskentry>
+		</taskgroup>
+	</task>
+</rflow>
