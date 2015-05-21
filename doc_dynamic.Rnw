@@ -1,0 +1,87 @@
+\documentclass[11pt,a4paper,oneside]{article}
+\usepackage{amsmath,amsthm,amsfonts,amssymb}
+\usepackage{pst-eucl,pstricks,pstricks-add}
+\usepackage[utf8]{inputenc}
+%\usepackage[latin1]{inputenc}
+\usepackage[spanish,activeacute]{babel}
+\usepackage[a4paper,margin=2.5cm]{geometry}
+\usepackage{times}
+\usepackage[T1]{fontenc}
+\usepackage{titlesec}
+\usepackage{color}
+\usepackage{url}
+\usepackage{float}
+\usepackage{cite}
+\usepackage{graphicx}
+\usepackage{multicol}
+\usepackage{lmodern}
+\usepackage{setspace}
+%\doublespace %para doble espacio
+\onehalfspace %para espacio y medio
+\parindent=0mm
+
+\begin{document}
+
+\begin{center}
+{\huge \bf Reporte dinámico}\\
+{\bf Diego Huaraca}\\
+{Mayo 2015}
+\end{center}
+
+El presente documento nos muestra estadísticas básicas de las condiciones de vuelo registradas durante el 2013, para los vuelos que partieron desde {\bf Newark Liberty International Airport}. \\
+
+Los datos se encuentran registrados en dos centros, el primero de ellos poseen información sobre la salida del vuelo:
+<<echo=FALSE>>=
+data <- read.table(file="/Users/Diego/Dropbox/Source Stat Lab/Videos/weather.txt", header=TRUE, sep="\t", dec=".")
+head(data, n=5)
+@
+Los registros que han sido almacenados por el departamento administrativo contabilizan un total de \Sexpr{nrow(data)} vuelos.\newline
+
+Por otro lado, el departamento de climatología a proporcionado los registros con las condiciones climáticas que fueron almacenadas para la mayoria de vuelos.
+
+<<echo=FALSE>>=
+clima <- read.csv(file="/Users/Diego/Dropbox/Source Stat Lab/Videos/weather.csv", header=TRUE, dec=".")
+head(clima, n=5)
+@
+
+Los registros almacenados por climatología contabilizan un total de \Sexpr{nrow(clima)} vuelos. Sin embargo, la mayoría de estos registros se encuentran duplicados por lo cual se hace necesario cruzar las bases de acuerdo al número de vuelo.
+<<echo=FALSE>>=
+datos <- merge(data, clima, by.x="code", by.y="code")
+@
+
+
+<<echo=FALSE>>=
+head(datos, n=5)
+@
+
+Los registros cruzados dan un total de \Sexpr{nrow(datos)}.\\
+
+<<echo=FALSE, fig.align='center', fig.width=6, fig.height=4>>=
+library(ggplot2)
+colores <- c("green4", "green3", "deepskyblue3", "goldenrod3", "gold", "darkorange", "deepskyblue2", "deepskyblue1", "orange", "orangered", "hotpink", "red")
+
+ggplot(datos, aes(x=month, fill=as.factor(month))) + geom_histogram(binwidth=1)+
+  scale_fill_manual(values=colores) + labs(x=" ") + labs(title="Distribucion Vuelos por mes") + labs(fill="Mes") +
+  labs(y="CASOS") + theme(text=element_text(size=15), legend.position="none")
+@
+
+Evidenciamos un número constante de vuelos en cada uno de los meses durante el año 2013.
+
+<<echo=FALSE, fig.align='center', fig.width=6, fig.height=4, warning=FALSE>>=
+ggplot(datos, aes(x=temp)) + geom_histogram(binwidth=10)+
+  scale_fill_manual(values='gray') + labs(x=" ") + labs(title="Distribucion de la temperatura") + labs(fill="Mes") +
+  labs(y="CASOS") + theme(text=element_text(size=15), legend.position="none")
+@
+
+Los valores de temperatura muestran una concentración en valores cercanos a 60 grados Fahrenheit.\\
+
+Finalmente, mostramos la distribución de la temperatura en cada uno de los meses por medio de diagramas de cada y bigotes.
+
+<<echo=FALSE, fig.align='center', fig.width=6, fig.height=4, warning=FALSE>>=
+ggplot(datos, aes(x=month, y=temp, fill=as.factor(month))) + labs(x="MES") +
+    geom_boxplot(outlier.colour="red",outlier.shape=16, outlier.size=4) + labs(fill=" ") + labs(title="Temperatura por mes") + labs(y="Indicador")+ stat_boxplot(geom ='errorbar') + scale_fill_manual(values=colores) +
+    theme(legend.position="none") + theme(text = element_text(size=15))
+@
+
+
+\end{document}
